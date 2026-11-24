@@ -1,0 +1,83 @@
+// Generated from %[3]s.%[1]s
+package %[7]s
+
+import (
+	"context"
+	"errors"
+	"fmt"
+	"log/slog"
+	"net/http"
+	"net/url"
+	"runtime"
+	"strings"
+
+	"%[4]s"
+)
+
+// ErrClientFailure indicates a system error while invoking the REST API.
+var ErrClientFailure = errors.New("client call failure")
+
+// ErrAPIFailure indicates an API error while invoking the REST API.
+var ErrAPIFailure = errors.New("API failure")
+
+// %[5]s instances are used to access the REST API.
+type %[5]s struct {
+	apiURL     *url.URL
+	httpClient *http.Client
+	apiClient  %[2]s
+	logger     *slog.Logger
+}
+
+// ClientOption interface is used to set %[5]s options during %[5]s creation.
+type ClientOption interface {
+	// Apply sets one or more options in the given %[5]s instance.
+	Apply(client *%[5]s)
+}
+
+// ClientOptionFunc type is used to wrap functions into a ClientOption instance.
+type ClientOptionFunc func(client *%[5]s)
+
+// Apply sets one or more options in the given %[5]s instance.
+func (f ClientOptionFunc) Apply(client *%[5]s) {
+	f(client)
+}
+
+// WithHttpClient sets a %[5]s instance's [http.Client] which is used
+// to access the REST API.
+func WithHttpClient(httpClient *http.Client) ClientOptionFunc {
+	return func(client *%[5]s) {
+		client.httpClient = httpClient
+	}
+}
+
+// WithLogger sets a %[5]s instance's [slog.Logger] which is used
+// for logging.
+func WithLogger(logger *slog.Logger) ClientOptionFunc {
+	return func(client *%[5]s) {
+		client.logger = logger
+	}
+}
+
+// NewClient creates a new %[5]s instance using the given
+// connect URL as well as %[5]s options.
+func NewClient(apiURL *url.URL, options ...ClientOption) (*%[5]s, error) {
+	client := &%[5]s{
+		apiURL: apiURL,
+	}
+	for _, option := range options {
+		option.Apply(client)
+	}
+	if client.httpClient == nil {
+		client.httpClient = &http.Client{}
+	}
+	if client.logger == nil {
+		client.logger = slog.With(slog.String("client", apiURL.String()))
+	}
+	apiClient, err := %[3]s.NewClientWithResponses(apiURL.String(), %[3]s.WithHTTPClient(client.httpClient), %[3]s.WithRequestEditorFn(client.prepareRequest()))
+	if err != nil {
+		return nil, fmt.Errorf("failed to create client (cause: %%w)", err)
+	}
+	client.apiClient = apiClient
+	return client, nil
+}
+

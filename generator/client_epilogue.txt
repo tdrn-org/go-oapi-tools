@@ -1,0 +1,25 @@
+
+func (client *%[5]s) prepareRequest() %[3]s.RequestEditorFn {
+	return func(ctx context.Context, req *http.Request) error {
+		req.Header.Set("Accept", "application/json")
+		return nil
+	}
+}
+
+func (client *%[5]s) operationID() string {
+	pc, _, _, _ := runtime.Caller(3)
+	caller := runtime.FuncForPC(pc)
+	callerName := caller.Name()
+	return callerName[strings.LastIndex(callerName, ".")+1:]
+}
+
+func (client *%[5]s) wrapSystemError(err error) error {
+	return fmt.Errorf("%%w %%s (cause: %%w)", ErrClientFailure, client.operationID(), err)
+}
+
+func (client *%[5]s) checkAPIResponse(httpResponse *http.Response) error {
+	if httpResponse.StatusCode != http.StatusOK {
+		return fmt.Errorf("%%w %%s (status: %%s)", ErrAPIFailure, client.operationID(), httpResponse.Status)
+	}
+	return nil
+}

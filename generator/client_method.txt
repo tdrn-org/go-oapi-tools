@@ -1,0 +1,11 @@
+func (client *%[5]s) %[9]s {
+	response, err := client.apiClient.%[10]s
+	if err != nil {
+		return nil, client.wrapSystemError(err)
+	}
+	err = client.checkAPIResponse(response.HTTPResponse)
+	if err != nil {
+		return nil, err
+	}
+	return response, err
+}
