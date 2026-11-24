@@ -17,6 +17,7 @@ type ClientConfig struct {
 	BasePkg     string `yaml:"base_pkg"`
 	ClientType  string `yaml:"client_type"`
 	WrapperType string `yaml:"wrapper_type"`
+	WrapperFile string `yaml:"wrapper_file"`
 }
 
 func LoadClientConfig(file string) (*ClientConfig, error) {

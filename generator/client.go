@@ -17,16 +17,16 @@ import (
 )
 
 func RunClientConfig(config *ClientConfig) (bool, error) {
-	return GenerateClientWrapper(config.BasePkg, config.ClientType, config.WrapperType)
+	return GenerateClientWrapper(config.BasePkg, config.ClientType, config.WrapperType, config.WrapperFile)
 }
 
-func GenerateClientWrapper(basePkg, clientType, wrapperType string) (bool, error) {
+func GenerateClientWrapper(basePkg, clientType, wrapperType, wrapperFile string) (bool, error) {
 	slog.Info("generating client wrapper...", slog.Any("basePkg", basePkg), slog.String("clientType", clientType), slog.String("wrapperType", wrapperType))
 	code, err := codegen.Generate(basePkg, clientType, wrapperType, &wrapperGenerator{})
 	if err != nil {
 		return false, err
 	}
-	return codegen.FormatAndUpdate("../internal/demo/client.go", code)
+	return codegen.FormatAndUpdate(wrapperFile, code)
 }
 
 type wrapperGenerator struct {
