@@ -1,4 +1,3 @@
-
 func (client *%[5]s) prepareRequest() %[3]s.RequestEditorFn {
 	return func(ctx context.Context, req *http.Request) error {
 		req.Header.Set("Accept", "application/json")
