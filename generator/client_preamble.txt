@@ -63,13 +63,11 @@ func WithLogger(logger *slog.Logger) ClientOptionFunc {
 // request issued via this Client instance.
 func WithRequestEditors(requestEditors ...api.RequestEditorFn) ClientOptionFunc {
 	return func(client *Client) {
-		client.requestEditors = requestEditors
+		client.requestEditors = append(client.requestEditors, requestEditors...)
 	}
 }
 
-// NewClient creates a new %[5]s instance using the given
-// connect URL as well as %[5]s options.
-func NewClient(apiURL *url.URL, options ...ClientOption) (*%[5]s, error) {
+func newClient(apiURL *url.URL, options ...ClientOption) (*%[5]s, error) {
 	client := &%[5]s{
 		apiURL: apiURL,
 	}
