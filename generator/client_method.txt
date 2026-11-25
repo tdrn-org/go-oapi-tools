@@ -1,5 +1,6 @@
-func (client *%[5]s) %[9]s {
-	response, err := client.apiClient.%[10]s
+// See [%[3]s.%[9]s]
+func (client *%[5]s) %[10]s {
+	response, err := client.apiClient.%[11]s
 	if err != nil {
 		return nil, client.wrapSystemError(err)
 	}

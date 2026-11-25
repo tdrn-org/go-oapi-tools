@@ -22,10 +22,11 @@ var ErrAPIFailure = errors.New("API failure")
 
 // Client instances are used to access the REST API.
 type Client struct {
-	apiURL     *url.URL
-	httpClient *http.Client
-	apiClient  api.ClientWithResponsesInterface
-	logger     *slog.Logger
+	apiURL         *url.URL
+	apiClient      api.ClientWithResponsesInterface
+	httpClient     *http.Client
+	logger         *slog.Logger
+	requestEditors []api.RequestEditorFn
 }
 
 // ClientOption interface is used to set Client options during Client creation.
@@ -58,6 +59,14 @@ func WithLogger(logger *slog.Logger) ClientOptionFunc {
 	}
 }
 
+// WithRequestEditors sets the [api.RequestEditorFn]s to applied to to each
+// request issued via this Client instance.
+func WithRequestEditors(requestEditors ...api.RequestEditorFn) ClientOptionFunc {
+	return func(client *Client) {
+		client.requestEditors = requestEditors
+	}
+}
+
 // NewClient creates a new Client instance using the given
 // connect URL as well as Client options.
 func NewClient(apiURL *url.URL, options ...ClientOption) (*Client, error) {
@@ -81,6 +90,7 @@ func NewClient(apiURL *url.URL, options ...ClientOption) (*Client, error) {
 	return client, nil
 }
 
+// See [api.GetUsersWithResponse]
 func (client *Client) GetUsers(ctx context.Context, reqEditors ...api.RequestEditorFn) (*api.GetUsersResponse, error) {
 	response, err := client.apiClient.GetUsersWithResponse(ctx, reqEditors...)
 	if err != nil {
@@ -95,7 +105,12 @@ func (client *Client) GetUsers(ctx context.Context, reqEditors ...api.RequestEdi
 
 func (client *Client) prepareRequest() api.RequestEditorFn {
 	return func(ctx context.Context, req *http.Request) error {
-		req.Header.Set("Accept", "application/json")
+		for _, requestEditor := range client.requestEditors {
+			err := requestEditor(ctx, req)
+			if err != nil {
+				return err
+			}
+		}
 		return nil
 	}
 }

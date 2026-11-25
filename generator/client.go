@@ -64,6 +64,7 @@ func (g *wrapperGenerator) Method(out *strings.Builder, ctx *codegen.GeneratorCo
 		ctx.DstTypeInfo.FullName,
 		ctx.DstTypeInfo.PkgName,
 		ctx.DstTypeInfo.PkgPath,
+		methodName,
 		funcSignature,
 		funcCall)
 	return err
