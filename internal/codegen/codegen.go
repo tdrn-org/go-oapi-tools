@@ -264,6 +264,48 @@ func writeFuncCallParam(buffer *strings.Builder, param *types.Var, ellipsis bool
 	}
 }
 
+func ReflectCall(pkg *PkgInfo, signature *types.Signature) fmt.Stringer {
+	return stringerFunc(func() string {
+		buffer := &strings.Builder{}
+		buffer.WriteString("Call([]reflect.Value{")
+		params := signature.Params()
+		if params != nil {
+			paramsLen := params.Len()
+			for i := range paramsLen {
+				if i > 0 {
+					buffer.WriteString(", ")
+				}
+				param := params.At(i)
+				buffer.WriteString("reflect.ValueOf(")
+				buffer.WriteString(param.Name())
+				buffer.WriteString(")")
+			}
+		}
+		buffer.WriteString("})")
+		return buffer.String()
+	})
+}
+
+func ReflectReturn(pkg *PkgInfo, signature *types.Signature) fmt.Stringer {
+	return stringerFunc(func() string {
+		buffer := &strings.Builder{}
+		results := signature.Results()
+		if results != nil {
+			resultsLen := results.Len()
+			for i := range resultsLen {
+				if i > 0 {
+					buffer.WriteString(", ")
+				}
+				result := results.At(i)
+				buffer.WriteString(fmt.Sprintf("results[%d].Interface().(", i))
+				buffer.WriteString(localizeFuncSignatureType(pkg, result.Type(), false))
+				buffer.WriteString(")")
+			}
+		}
+		return buffer.String()
+	})
+}
+
 type stringerFunc func() string
 
 func (f stringerFunc) String() string {

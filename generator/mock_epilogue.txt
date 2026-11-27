@@ -1,0 +1,40 @@
+func (s *%[5]s) setupHttpServer(baseURL string, baseRouter %[3]s.ServeMux, middlewares ...%[3]s.MiddlewareFunc) {
+	strictHandlerMiddlewares := []%[3]s.StrictMiddlewareFunc{
+		s.logOperationMiddleware,
+	}
+	strictHandlerOptions := %[3]s.StrictHTTPServerOptions{
+		RequestErrorHandlerFunc:  s.errorHandler,
+		ResponseErrorHandlerFunc: s.errorHandler,
+	}
+	strictHandler := %[3]s.NewStrictHandlerWithOptions(s, strictHandlerMiddlewares, strictHandlerOptions)
+	handlerOptions := %[3]s.StdHTTPServerOptions{
+		BaseURL:          baseURL,
+		BaseRouter:       baseRouter,
+		Middlewares:      middlewares,
+		ErrorHandlerFunc: s.errorHandler,
+	}
+	handler := %[3]s.HandlerWithOptions(strictHandler, handlerOptions)
+	s.httpServer = &http.Server{
+		Handler: handler,
+	}
+}
+
+func (s *%[5]s) logOperationMiddleware(f %[3]s.StrictHandlerFunc, operationID string) %[3]s.StrictHandlerFunc {
+	s.logger.Info("mock call", slog.String("operation", operationID))
+	return f
+}
+
+func (s *%[5]s) errorHandler(w http.ResponseWriter, r *http.Request, err error) {
+	s.logger.Error("mock handler failure", slog.String("url", r.URL.String()), slog.Any("err", err))
+	w.WriteHeader(http.StatusInternalServerError)
+}
+
+func (s *%[5]s) listenAndServe() {
+	s.logger.Info("http server starting...")
+	err := s.httpServer.Serve(s.httpListener)
+	if !errors.Is(err, http.ErrServerClosed) {
+		s.logger.Error("http server failure", slog.Any("err", err))
+		return
+	}
+	s.logger.Info("http server stopped")
+}

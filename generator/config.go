@@ -32,3 +32,23 @@ func LoadClientConfig(file string) (*ClientConfig, error) {
 	}
 	return config, nil
 }
+
+type MockConfig struct {
+	BasePkg     string `yaml:"base_pkg"`
+	ServiceType string `yaml:"service_type"`
+	MockType    string `yaml:"mock_type"`
+	MockFile    string `yaml:"mock_file"`
+}
+
+func LoadMockConfig(file string) (*MockConfig, error) {
+	data, err := os.ReadFile(file)
+	if err != nil {
+		return nil, fmt.Errorf("failed to read mock config %q (cause: %w)", file, err)
+	}
+	config := &MockConfig{}
+	err = yaml.Unmarshal(data, config)
+	if err != nil {
+		return nil, fmt.Errorf("failed to unmarshal mock config %q (cause: %w)", file, err)
+	}
+	return config, nil
+}

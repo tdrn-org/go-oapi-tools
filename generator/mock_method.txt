@@ -1,0 +1,10 @@
+// See [%[3]s.%[9]s]
+func (s *%[5]s) %[10]s {
+	mockMethod := reflect.ValueOf(s.mockHandler).MethodByName("%[9]s")
+	if mockMethod.IsValid() {
+		results := mockMethod.%[11]s
+		return %[12]s
+	}
+	return nil, ErrNoMock
+}
+

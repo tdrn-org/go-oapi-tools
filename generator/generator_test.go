@@ -20,3 +20,11 @@ func TestGenerateClientWrapper(t *testing.T) {
 	require.NoError(t, err)
 	require.False(t, updated)
 }
+
+func TestGenerateServiceMock(t *testing.T) {
+	config, err := generator.LoadMockConfig("testdata/mock.conf")
+	require.NoError(t, err)
+	updated, err := generator.RunMockConfig(config)
+	require.NoError(t, err)
+	require.False(t, updated)
+}

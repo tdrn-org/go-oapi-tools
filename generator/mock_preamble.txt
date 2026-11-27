@@ -1,0 +1,62 @@
+// Generated from %[3]s.%[1]s
+package %[7]s
+
+import (
+	"context"
+	"errors"
+	"fmt"
+	"log/slog"
+	"net"
+	"net/http"
+	"net/url"
+	"reflect"
+	"sync"
+
+	"%[4]s"
+)
+
+// ErrNoMock indicates a called handler is not mocked and simply fails with this error.
+var ErrNoMock = errors.New("no mock")
+
+// %[5]s represents a mock instance.
+type %[5]s struct {
+	httpListener net.Listener
+	apiURL       *url.URL
+	mockHandler  any
+	logger       *slog.Logger
+	stoppedWG    sync.WaitGroup
+	httpServer   *http.Server
+}
+
+func startMockServer(mockHandler any, baseURL string, baseRouter %[3]s.ServeMux, middlewares ...%[3]s.MiddlewareFunc) *%[5]s {
+	httpListener, err := net.Listen("tcp", "localhost:0")
+	if err != nil {
+		panic(err)
+	}
+	address := httpListener.Addr().String()
+	apiURL, err := url.Parse(fmt.Sprintf("http://%%s", address))
+	logger := slog.Default().With(slog.String("server", address))
+	if err != nil {
+		panic(err)
+	}
+	server := &%[5]s{
+		httpListener: httpListener,
+		apiURL:       apiURL,
+		mockHandler:  mockHandler,
+		logger:       logger,
+	}
+	server.setupHttpServer(baseURL, baseRouter, middlewares...)
+	server.stoppedWG.Go(server.listenAndServe)
+	return server
+}
+
+// APIURL gets the API URL for this mock instance.
+func (s *%[5]s) APIURL() *url.URL {
+	return s.apiURL
+}
+
+// Stop stops this mock instance.
+func (s *%[5]s) Stop(ctx context.Context) {
+	s.httpServer.Shutdown(ctx)
+	s.stoppedWG.Wait()
+}

@@ -26,7 +26,7 @@ type %[5]s struct {
 	apiClient  %[2]s
 	httpClient *http.Client
 	logger     *slog.Logger
-	requestEditors []api.RequestEditorFn
+	requestEditors []%[3]s.RequestEditorFn
 }
 
 // ClientOption interface is used to set %[5]s options during %[5]s creation.
@@ -59,9 +59,9 @@ func WithLogger(logger *slog.Logger) ClientOptionFunc {
 	}
 }
 
-// WithRequestEditors sets the [api.RequestEditorFn]s to applied to to each
+// WithRequestEditors sets the [%[3]s.RequestEditorFn]s to applied to to each
 // request issued via this Client instance.
-func WithRequestEditors(requestEditors ...api.RequestEditorFn) ClientOptionFunc {
+func WithRequestEditors(requestEditors ...%[3]s.RequestEditorFn) ClientOptionFunc {
 	return func(client *Client) {
 		client.requestEditors = append(client.requestEditors, requestEditors...)
 	}

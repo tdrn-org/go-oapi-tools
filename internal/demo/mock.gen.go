@@ -1,0 +1,113 @@
+// Generated from api.StrictServerInterface
+package demo
+
+import (
+	"context"
+	"errors"
+	"fmt"
+	"log/slog"
+	"net"
+	"net/http"
+	"net/url"
+	"reflect"
+	"sync"
+
+	"github.com/tdrn-org/go-oapi-tools/internal/demo/api"
+)
+
+// ErrNoMock indicates a called handler is not mocked and simply fails with this error.
+var ErrNoMock = errors.New("no mock")
+
+// Server represents a mock instance.
+type Server struct {
+	httpListener net.Listener
+	apiURL       *url.URL
+	mockHandler  any
+	logger       *slog.Logger
+	stoppedWG    sync.WaitGroup
+	httpServer   *http.Server
+}
+
+func startMockServer(mockHandler any, baseURL string, baseRouter api.ServeMux, middlewares ...api.MiddlewareFunc) *Server {
+	httpListener, err := net.Listen("tcp", "localhost:0")
+	if err != nil {
+		panic(err)
+	}
+	address := httpListener.Addr().String()
+	apiURL, err := url.Parse(fmt.Sprintf("http://%s", address))
+	logger := slog.Default().With(slog.String("server", address))
+	if err != nil {
+		panic(err)
+	}
+	server := &Server{
+		httpListener: httpListener,
+		apiURL:       apiURL,
+		mockHandler:  mockHandler,
+		logger:       logger,
+	}
+	server.setupHttpServer(baseURL, baseRouter, middlewares...)
+	server.stoppedWG.Go(server.listenAndServe)
+	return server
+}
+
+// APIURL gets the API URL for this mock instance.
+func (s *Server) APIURL() *url.URL {
+	return s.apiURL
+}
+
+// Stop stops this mock instance.
+func (s *Server) Stop(ctx context.Context) {
+	s.httpServer.Shutdown(ctx)
+	s.stoppedWG.Wait()
+}
+
+// See [api.GetUsers]
+func (s *Server) GetUsers(ctx context.Context, request api.GetUsersRequestObject) (api.GetUsersResponseObject, error) {
+	mockMethod := reflect.ValueOf(s.mockHandler).MethodByName("GetUsers")
+	if mockMethod.IsValid() {
+		results := mockMethod.Call([]reflect.Value{reflect.ValueOf(ctx), reflect.ValueOf(request)})
+		return results[0].Interface().(api.GetUsersResponseObject), results[1].Interface().(error)
+	}
+	return nil, ErrNoMock
+}
+
+func (s *Server) setupHttpServer(baseURL string, baseRouter api.ServeMux, middlewares ...api.MiddlewareFunc) {
+	strictHandlerMiddlewares := []api.StrictMiddlewareFunc{
+		s.logOperationMiddleware,
+	}
+	strictHandlerOptions := api.StrictHTTPServerOptions{
+		RequestErrorHandlerFunc:  s.errorHandler,
+		ResponseErrorHandlerFunc: s.errorHandler,
+	}
+	strictHandler := api.NewStrictHandlerWithOptions(s, strictHandlerMiddlewares, strictHandlerOptions)
+	handlerOptions := api.StdHTTPServerOptions{
+		BaseURL:          baseURL,
+		BaseRouter:       baseRouter,
+		Middlewares:      middlewares,
+		ErrorHandlerFunc: s.errorHandler,
+	}
+	handler := api.HandlerWithOptions(strictHandler, handlerOptions)
+	s.httpServer = &http.Server{
+		Handler: handler,
+	}
+}
+
+func (s *Server) logOperationMiddleware(f api.StrictHandlerFunc, operationID string) api.StrictHandlerFunc {
+	s.logger.Info("mock call", slog.String("operation", operationID))
+	return f
+}
+
+func (s *Server) errorHandler(w http.ResponseWriter, r *http.Request, err error) {
+	s.logger.Error("mock handler failure", slog.String("url", r.URL.String()), slog.Any("err", err))
+	w.WriteHeader(http.StatusInternalServerError)
+}
+
+func (s *Server) listenAndServe() {
+	s.logger.Info("http server starting...")
+	err := s.httpServer.Serve(s.httpListener)
+	if !errors.Is(err, http.ErrServerClosed) {
+		s.logger.Error("http server failure", slog.Any("err", err))
+		return
+	}
+	s.logger.Info("http server stopped")
+}

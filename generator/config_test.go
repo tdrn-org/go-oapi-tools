@@ -18,3 +18,9 @@ func TestLoadClientConfig(t *testing.T) {
 	require.NoError(t, err)
 	require.NotNil(t, config)
 }
+
+func TestLoadMockConfig(t *testing.T) {
+	config, err := generator.LoadClientConfig("testdata/mock.conf")
+	require.NoError(t, err)
+	require.NotNil(t, config)
+}
