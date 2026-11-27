@@ -23,6 +23,8 @@ type GenerateConfig struct {
 	OAPI          oapi.Config            `yaml:"oapi"`
 	ClientEnabled bool                   `yaml:"client_enabled"`
 	Client        generator.ClientConfig `yaml:"client"`
+	MockEnabled   bool                   `yaml:"mock_enabled"`
+	Mock          generator.MockConfig   `yaml:"mock"`
 }
 
 func LoadGenerateConfig(file string) (*GenerateConfig, error) {
