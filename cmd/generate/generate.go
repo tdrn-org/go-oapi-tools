@@ -49,7 +49,14 @@ func generate(args ...string) int {
 	if config.ClientEnabled {
 		_, err = generator.RunClientConfig(&config.Client)
 		if err != nil {
-			logger.Error("generate client failure", slog.Any("err", err))
+			logger.Error("generate client wrapper failure", slog.Any("err", err))
+			return 1
+		}
+	}
+	if config.MockEnabled {
+		_, err = generator.RunMockConfig(&config.Mock)
+		if err != nil {
+			logger.Error("generate mock service failure", slog.Any("err", err))
 			return 1
 		}
 	}
