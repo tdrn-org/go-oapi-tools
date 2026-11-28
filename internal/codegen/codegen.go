@@ -297,9 +297,9 @@ func ReflectReturn(pkg *PkgInfo, signature *types.Signature) fmt.Stringer {
 					buffer.WriteString(", ")
 				}
 				result := results.At(i)
-				buffer.WriteString(fmt.Sprintf("results[%d].Interface().(", i))
+				buffer.WriteString("safeCast[")
 				buffer.WriteString(localizeFuncSignatureType(pkg, result.Type(), false))
-				buffer.WriteString(")")
+				fmt.Fprintf(buffer, "](results[%d],nil)", i)
 			}
 		}
 		return buffer.String()

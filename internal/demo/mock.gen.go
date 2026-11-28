@@ -66,9 +66,17 @@ func (s *Server) GetUsers(ctx context.Context, request api.GetUsersRequestObject
 	mockMethod := reflect.ValueOf(s.mockHandler).MethodByName("GetUsers")
 	if mockMethod.IsValid() {
 		results := mockMethod.Call([]reflect.Value{reflect.ValueOf(ctx), reflect.ValueOf(request)})
-		return results[0].Interface().(api.GetUsersResponseObject), results[1].Interface().(error)
+		return safeCast[api.GetUsersResponseObject](results[0], nil), safeCast[error](results[1], nil)
 	}
 	return nil, ErrNoMock
+}
+
+func safeCast[T any](v reflect.Value, vNil T) T {
+	vInterface := v.Interface()
+	if vInterface == nil {
+		return vNil
+	}
+	return vInterface.(T)
 }
 
 func (s *Server) setupHttpServer(baseURL string, baseRouter api.ServeMux, middlewares ...api.MiddlewareFunc) {

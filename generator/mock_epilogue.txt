@@ -1,3 +1,11 @@
+func safeCast[T any](v reflect.Value, vNil T) T {
+	vInterface := v.Interface()
+	if vInterface == nil {
+		return vNil
+	}
+	return vInterface.(T)
+}
+
 func (s *%[5]s) setupHttpServer(baseURL string, baseRouter %[3]s.ServeMux, middlewares ...%[3]s.MiddlewareFunc) {
 	strictHandlerMiddlewares := []%[3]s.StrictMiddlewareFunc{
 		s.logOperationMiddleware,
