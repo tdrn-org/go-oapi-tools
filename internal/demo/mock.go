@@ -6,10 +6,22 @@
 
 package demo
 
+import (
+	"context"
+
+	"github.com/tdrn-org/go-oapi-tools/internal/demo/api"
+)
+
 // StartMockServer starts and returns a new mock instance.
 //
 // StartMockServer panics in case of an error. The returned server
 // is listening on localhost using a dynamic port.
 func StartMockServer() *Server {
-	return startMockServer(nil, "", nil)
+	return startMockServer(&mockHandler{}, "", nil)
+}
+
+type mockHandler struct{}
+
+func (h *mockHandler) GetUsers(ctx context.Context, request api.GetUsersRequestObject) (api.GetUsersResponseObject, error) {
+	return api.GetUsers200JSONResponse([]string{"user1", "user2"}), nil
 }
