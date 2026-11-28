@@ -8,6 +8,8 @@ package demo
 
 import (
 	"context"
+	"errors"
+	"sync/atomic"
 
 	"github.com/tdrn-org/go-oapi-tools/internal/demo/api"
 )
@@ -20,8 +22,14 @@ func StartMockServer() *Server {
 	return startMockServer(&mockHandler{}, "", nil)
 }
 
-type mockHandler struct{}
+type mockHandler struct {
+	called atomic.Bool
+}
 
 func (h *mockHandler) GetUsers(ctx context.Context, request api.GetUsersRequestObject) (api.GetUsersResponseObject, error) {
+	initialCall := h.called.CompareAndSwap(false, true)
+	if !initialCall {
+		return nil, errors.New("already called")
+	}
 	return api.GetUsers200JSONResponse([]string{"user1", "user2"}), nil
 }
